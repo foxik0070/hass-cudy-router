@@ -3,7 +3,7 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-import async_timeout
+import asyncio
 
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 
@@ -41,7 +41,7 @@ class CudyRouterDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Get the latest data from the router."""
-        async with async_timeout.timeout(30):
+        async with asyncio.timeout(30):
             try:
                 return await self.api.get_data(self.hass, self.config_entry.options, self.data)
             except Exception as err:

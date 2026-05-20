@@ -9,7 +9,7 @@ from http.cookies import SimpleCookie
 from bs4 import BeautifulSoup
 import homeassistant.util.dt as dt_util
 
-from .const import MODULE_DEVICES, MODULE_LAN, MODULE_BANDWIDTH, MODULE_SYSTEM, OPTIONS_DEVICELIST
+from .const import MODULE_DEVICES, MODULE_LAN, MODULE_BANDWIDTH, MODULE_SYSTEM
 from .parser import parse_devices, parse_lan_info, parse_bandwidth_json, parse_system_info
 
 _LOGGER = logging.getLogger(__name__)
@@ -68,7 +68,8 @@ class CudyRouter:
                 if cookie.get("sysauth"):
                      self.auth_cookie = cookie.get("sysauth").value
                      return True
-        except: pass
+        except Exception:
+            pass
         return False
 
     def get(self, url: str) -> str:
@@ -83,7 +84,8 @@ class CudyRouter:
                     if self.authenticate(): continue
                     else: break
                 if response.ok: return response.text
-            except: pass
+            except Exception:
+                pass
         return ""
 
     async def get_data(self, hass, options: dict[str, Any], previous_data: dict[str, Any] = None) -> dict[str, Any]:
@@ -105,7 +107,7 @@ class CudyRouter:
                  data[MODULE_BANDWIDTH] = parse_bandwidth_json(json.loads(raw_bw), hw_version)
              else:
                  data[MODULE_BANDWIDTH] = {}
-        except:
+        except Exception:
              data[MODULE_BANDWIDTH] = {}
 
         return data

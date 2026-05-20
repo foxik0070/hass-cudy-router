@@ -106,7 +106,8 @@ def parse_bandwidth_json(json_data: list, hw_version: str = "") -> dict[str, Any
             
         return {"download_mbps": max(0.0, rx_mbps), "upload_mbps": max(0.0, tx_mbps),
                 "download_total_gb": max(0.0, total_rx_gb), "upload_total_gb": max(0.0, total_tx_gb)}
-    except: return {"upload_mbps": 0.0, "download_mbps": 0.0, "upload_total_gb": 0.0, "download_total_gb": 0.0}
+    except Exception:
+        return {"upload_mbps": 0.0, "download_mbps": 0.0, "upload_total_gb": 0.0, "download_total_gb": 0.0}
 
 def _parse_ac1200_style(soup: BeautifulSoup) -> list[dict]:
     devices = []
@@ -142,7 +143,8 @@ def _parse_ac1200_style(soup: BeautifulSoup) -> list[dict]:
                 "online_time": _get_clean_text(row.find("div", id=re.compile(r"-online$"))),
                 "connection": conn_raw, "is_wifi": is_wifi, "is_eth": is_eth
             })
-        except: continue
+        except Exception:
+            continue
     return devices
 
 def parse_devices(input_html: str, router_ip: str = "") -> dict[str, Any]:
