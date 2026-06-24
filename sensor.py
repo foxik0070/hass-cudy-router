@@ -89,8 +89,16 @@ class CudyGenericSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, description):
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.host}_{description.key}"
-        self._attr_device_info = {"identifiers": {(DOMAIN, coordinator.host)}, "name": f"Cudy Router {coordinator.host}"}
+        # Unique ID zajistí, že se senzory různých routerů nepoperou
+        self._attr_unique_id = f"cudy_{coordinator.host}_{description.key}"
+        # Name nyní obsahuje IP adresu, aby se sensory jmenovaly unikátně
+        self._attr_name = f"Cudy {coordinator.host} {description.name}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.host)},
+            "name": f"Cudy Router {coordinator.host}",
+            "manufacturer": "Cudy",
+        }
+
     @property
     def native_value(self):
         module_data = self.coordinator.data.get(self.entity_description.module)
@@ -99,12 +107,14 @@ class CudyGenericSensor(CoordinatorEntity, SensorEntity):
 class CudyConnectedDevicesSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator):
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.host}_connected_devices"
-        self._attr_name = "Connected Devices List"
+        self._attr_unique_id = f"cudy_{coordinator.host}_connected_devices"
+        self._attr_name = f"Cudy {coordinator.host} Connected Devices List"
         self._attr_device_info = {"identifiers": {(DOMAIN, coordinator.host)}}
+
     @property
     def native_value(self):
         return self.coordinator.data.get(MODULE_DEVICES, {}).get("connected_devices", {}).get("value")
+
     @property
     def extra_state_attributes(self):
         return self.coordinator.data.get(MODULE_DEVICES, {}).get("connected_devices", {}).get("attributes", {})

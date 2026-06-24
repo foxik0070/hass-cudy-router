@@ -46,17 +46,25 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
         self._attr_should_poll = False
         self._attr_available = True
 
+    def _get_devices(self) -> list:
+        return (
+            self.coordinator.data
+            .get(MODULE_DEVICES, {})
+            .get("connected_devices", {})
+            .get("attributes", {})
+            .get("devices", [])
+        )
+
     @property
     def is_connected(self) -> bool:
         """Return true if the device is connected: Wired or has a valid signal."""
-        devices = self.coordinator.data.get(MODULE_DEVICES, [])
-        for dev in devices:
-            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
+        for dev in self._get_devices():
+            if dev.get("mac", "").lower() == self._mac.lower():
                 connection = dev.get("connection", "").lower()
                 signal = dev.get("signal")
                 if connection == "wired":
                     return True
-                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                if signal and str(signal).strip() not in ("", "---"):
                     return True
                 return False
         return False
@@ -64,9 +72,8 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra attributes for the device tracker."""
-        devices = self.coordinator.data.get(MODULE_DEVICES, [])
-        for dev in devices:
-            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
+        for dev in self._get_devices():
+            if dev.get("mac", "").lower() == self._mac.lower():
                 return dev.copy()
         return {}
 
