@@ -6,11 +6,14 @@ from homeassistant.components.sensor import (
     SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfDataRate, UnitOfInformation, EntityCategory
+from homeassistant.const import UnitOfDataRate, UnitOfInformation, UnitOfTime, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from .const import DOMAIN, MODULE_BANDWIDTH, MODULE_LAN, MODULE_SYSTEM, MODULE_DEVICES
+from .const import (
+    DOMAIN, MODULE_BANDWIDTH, MODULE_LAN, MODULE_SYSTEM, MODULE_DEVICES,
+    MODULE_SYSTEM_STATUS, MODULE_WAN, MODULE_WIRELESS,
+)
 
 @dataclass
 class CudySensorEntityDescription(SensorEntityDescription):
@@ -76,6 +79,68 @@ SENSOR_TYPES: tuple[CudySensorEntityDescription, ...] = (
         key="eth_device_count", name="Ethernet Devices Connected", module=MODULE_DEVICES,
         state_class=SensorStateClass.MEASUREMENT, icon="mdi:lan",
         value_fn=lambda data: data.get("eth_device_count", {}).get("value"),
+    ),
+    # System status
+    CudySensorEntityDescription(
+        key="uptime", name="Uptime", module=MODULE_SYSTEM_STATUS,
+        icon="mdi:timer-outline", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("uptime"),
+    ),
+    CudySensorEntityDescription(
+        key="uptime_seconds", name="Uptime Seconds", module=MODULE_SYSTEM_STATUS,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        icon="mdi:timer", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("uptime_seconds"),
+    ),
+    # WAN
+    CudySensorEntityDescription(
+        key="wan_status", name="WAN Status", module=MODULE_WAN,
+        icon="mdi:wan", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("wan_status"),
+    ),
+    CudySensorEntityDescription(
+        key="wan_ip", name="WAN IP Address", module=MODULE_WAN,
+        icon="mdi:ip-network-outline", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("wan_ip"),
+    ),
+    CudySensorEntityDescription(
+        key="wan_protocol", name="WAN Protocol", module=MODULE_WAN,
+        icon="mdi:protocol", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("wan_protocol"),
+    ),
+    # Wireless 2.4G
+    CudySensorEntityDescription(
+        key="wifi_24g_ssid", name="WiFi 2.4G SSID", module=MODULE_WIRELESS,
+        icon="mdi:wifi", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("ssid_24g"),
+    ),
+    CudySensorEntityDescription(
+        key="wifi_24g_channel", name="WiFi 2.4G Channel", module=MODULE_WIRELESS,
+        icon="mdi:access-point", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("channel_24g"),
+    ),
+    CudySensorEntityDescription(
+        key="wifi_24g_status", name="WiFi 2.4G Status", module=MODULE_WIRELESS,
+        icon="mdi:wifi-check", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("status_24g"),
+    ),
+    # Wireless 5G
+    CudySensorEntityDescription(
+        key="wifi_5g_ssid", name="WiFi 5G SSID", module=MODULE_WIRELESS,
+        icon="mdi:wifi", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("ssid_5g"),
+    ),
+    CudySensorEntityDescription(
+        key="wifi_5g_channel", name="WiFi 5G Channel", module=MODULE_WIRELESS,
+        icon="mdi:access-point", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("channel_5g"),
+    ),
+    CudySensorEntityDescription(
+        key="wifi_5g_status", name="WiFi 5G Status", module=MODULE_WIRELESS,
+        icon="mdi:wifi-check", entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.get("status_5g"),
     ),
 )
 

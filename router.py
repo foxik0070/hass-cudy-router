@@ -9,8 +9,14 @@ from http.cookies import SimpleCookie
 from bs4 import BeautifulSoup
 import homeassistant.util.dt as dt_util
 
-from .const import MODULE_DEVICES, MODULE_LAN, MODULE_BANDWIDTH, MODULE_SYSTEM, OPTIONS_DEVICELIST
-from .parser import parse_devices, parse_lan_info, parse_bandwidth_json, parse_system_info
+from .const import (
+    MODULE_DEVICES, MODULE_LAN, MODULE_BANDWIDTH, MODULE_SYSTEM,
+    MODULE_SYSTEM_STATUS, MODULE_WAN, MODULE_WIRELESS, OPTIONS_DEVICELIST,
+)
+from .parser import (
+    parse_devices, parse_lan_info, parse_bandwidth_json, parse_system_info,
+    parse_system_status, parse_wan_info, parse_wireless_info,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,16 +102,25 @@ class CudyRouter:
         raw_lan_status = await hass.async_add_executor_job(self.get, "admin/network/lan/status")
         combined_html = (raw_status or "") + (raw_lan_status or "")
         data[MODULE_LAN] = parse_lan_info(combined_html)
+        data[MODULE_SYSTEM_STATUS] = parse_system_status(raw_status or "")
+
+        raw_wan = await hass.async_add_executor_job(self.get, "admin/network/wan/status")
+        data[MODULE_WAN] = parse_wan_info(raw_wan or "")
+
+        raw_wifi_24 = await hass.async_add_executor_job(self.get, "admin/network/wireless/status?iface=wlan00")
+        raw_wifi_5 = await hass.async_add_executor_job(self.get, "admin/network/wireless/status?iface=wlan10")
+        data[MODULE_WIRELESS] = parse_wireless_info(raw_wifi_24 or "", raw_wifi_5 or "")
+
         raw_dev = await hass.async_add_executor_job(self.get, "admin/network/devices/devlist?detail=1")
         data[MODULE_DEVICES] = parse_devices(raw_dev, self.host)
 
         try:
-             raw_bw = await hass.async_add_executor_job(self.get, "admin/status/bandwidth?iface=eth0")
-             if raw_bw:
-                 data[MODULE_BANDWIDTH] = parse_bandwidth_json(json.loads(raw_bw), hw_version)
-             else:
-                 data[MODULE_BANDWIDTH] = {}
-        except:
-             data[MODULE_BANDWIDTH] = {}
+            raw_bw = await hass.async_add_executor_job(self.get, "admin/status/bandwidth?iface=eth0")
+            if raw_bw:
+                data[MODULE_BANDWIDTH] = parse_bandwidth_json(json.loads(raw_bw), hw_version)
+            else:
+                data[MODULE_BANDWIDTH] = {}
+        except Exception:
+            data[MODULE_BANDWIDTH] = {}
 
         return data

@@ -84,6 +84,66 @@ def parse_system_info(input_html: str) -> dict[str, Any]:
             
     return data
 
+def _extract_kv(html: str) -> dict[str, str]:
+    soup = BeautifulSoup(html, "html.parser")
+    result: dict[str, str] = {}
+    for row in soup.find_all("tr"):
+        cells = row.find_all(["td", "th"])
+        if len(cells) >= 2:
+            k = _get_clean_text(cells[0])
+            v = _get_clean_text(cells[1])
+            if k and k != "Unknown" and v and v != "Unknown":
+                result[k] = v
+    return result
+
+def parse_system_status(html: str) -> dict[str, Any]:
+    data: dict[str, Any] = {"uptime": "Unknown", "uptime_seconds": 0, "local_time": "Unknown"}
+    if not html:
+        return data
+    kv = _extract_kv(html)
+    uptime_str = kv.get("Uptime", "")
+    if uptime_str:
+        data["uptime"] = uptime_str
+        total = 0
+        m = re.search(r"(\d+)\s*Day", uptime_str, re.I)
+        if m:
+            total += int(m.group(1)) * 86400
+        m = re.search(r"(\d{1,2}):(\d{2}):(\d{2})", uptime_str)
+        if m:
+            total += int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+        data["uptime_seconds"] = total
+    data["local_time"] = kv.get("Local Time", "Unknown")
+    return data
+
+def parse_wan_info(html: str) -> dict[str, Any]:
+    data: dict[str, Any] = {"wan_status": "Unknown", "wan_ip": "N/A", "wan_protocol": "Unknown"}
+    if not html:
+        return data
+    kv = _extract_kv(html)
+    data["wan_status"] = kv.get("Status", "Unknown")
+    ip_raw = kv.get("IP Address", "N/A")
+    ip_match = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", ip_raw)
+    data["wan_ip"] = ip_match.group(1) if ip_match else "N/A"
+    data["wan_protocol"] = kv.get("Protocol", "Unknown")
+    return data
+
+def parse_wireless_info(html_24g: str, html_5g: str) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "ssid_24g": "N/A", "channel_24g": "N/A", "status_24g": "Unknown",
+        "ssid_5g": "N/A", "channel_5g": "N/A", "status_5g": "Unknown",
+    }
+    if html_24g:
+        kv = _extract_kv(html_24g)
+        data["ssid_24g"] = kv.get("SSID", "N/A")
+        data["channel_24g"] = kv.get("Channel", "N/A")
+        data["status_24g"] = kv.get("Status", "Unknown")
+    if html_5g:
+        kv = _extract_kv(html_5g)
+        data["ssid_5g"] = kv.get("SSID", "N/A")
+        data["channel_5g"] = kv.get("Channel", "N/A")
+        data["status_5g"] = kv.get("Status", "Unknown")
+    return data
+
 def parse_bandwidth_json(json_data: list, hw_version: str = "") -> dict[str, Any]:
     if not json_data or len(json_data) < 2:
         return {"upload_mbps": 0.0, "download_mbps": 0.0, "upload_total_gb": 0.0, "download_total_gb": 0.0}
