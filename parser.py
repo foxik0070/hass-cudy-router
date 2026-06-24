@@ -93,17 +93,22 @@ def parse_bandwidth_json(json_data: list, hw_version: str = "") -> dict[str, Any
         if delta_t <= 0: delta_t = 1.0
         
         _hw = hw_version or ""
-        is_ax = any(m in _hw for m in ("WR3000", "AX3000", "AX1800", "AX6000", "AX"))
+        # WR3000E and newer AX routers store bandwidth in indices [3] and [4].
+        # Older AC routers (WR1200E etc.) use indices [1] and [3].
+        # Both store raw bytes; speed formula is identical.
+        is_ax = any(m in _hw for m in ("WR3000", "WR3000E", "AX3000", "AX1800", "AX6000"))
         if is_ax:
             raw_rx_diff, raw_tx_diff = last[3] - prev[3], last[4] - prev[4]
-            rx_mbps = round((raw_rx_diff * 8 * 45) / (delta_t * 10000.0), 2)
-            tx_mbps = round((raw_tx_diff * 8 * 45) / (delta_t * 10000.0), 2)
-            total_rx_gb, total_tx_gb = round(last[3] / 1024, 2), round(last[4] / 1024, 2)
+            rx_mbps = round((raw_rx_diff * 8) / (delta_t * 1000000.0), 2)
+            tx_mbps = round((raw_tx_diff * 8) / (delta_t * 1000000.0), 2)
+            total_rx_gb = round(last[3] / (1024 ** 3), 2)
+            total_tx_gb = round(last[4] / (1024 ** 3), 2)
         else:
             raw_rx_diff, raw_tx_diff = last[1] - prev[1], last[3] - prev[3]
             rx_mbps = round((raw_rx_diff * 8) / (delta_t * 1000000.0), 2)
             tx_mbps = round((raw_tx_diff * 8) / (delta_t * 1000000.0), 2)
-            total_rx_gb, total_tx_gb = round(last[1] / (1024**3), 2), round(last[3] / (1024**3), 2)
+            total_rx_gb = round(last[1] / (1024 ** 3), 2)
+            total_tx_gb = round(last[3] / (1024 ** 3), 2)
             
         return {"download_mbps": max(0.0, rx_mbps), "upload_mbps": max(0.0, tx_mbps),
                 "download_total_gb": max(0.0, total_rx_gb), "upload_total_gb": max(0.0, total_tx_gb)}
@@ -151,7 +156,16 @@ def parse_devices(input_html: str, router_ip: str = "") -> dict[str, Any]:
     devices = _parse_ac1200_style(soup)
     
     router_ips = [router_ip, "127.0.0.1", "Unknown"]
-    filtered_devices = [d for d in devices if d["ip"] not in router_ips and d["mac"] != "Unknown"]
+    seen_macs: set = set()
+    filtered_devices = []
+    for d in devices:
+        if d["ip"] in router_ips or d["mac"] == "Unknown":
+            continue
+        mac_lower = d["mac"].lower()
+        if mac_lower in seen_macs:
+            continue
+        seen_macs.add(mac_lower)
+        filtered_devices.append(d)
 
     wifi_devs = [d for d in filtered_devices if d["is_wifi"]]
     eth_devs = [d for d in filtered_devices if d["is_eth"]]
