@@ -59,7 +59,7 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
     def is_connected(self) -> bool:
         """Return true if the device is connected: Wired or has a valid signal."""
         for dev in self._get_devices():
-            if dev.get("mac", "").lower() == self._mac.lower():
+            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 connection = dev.get("connection", "").lower()
                 signal = dev.get("signal")
                 if connection == "wired":
@@ -73,7 +73,7 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra attributes for the device tracker."""
         for dev in self._get_devices():
-            if dev.get("mac", "").lower() == self._mac.lower():
+            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 return dev.copy()
         return {}
 

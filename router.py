@@ -74,7 +74,8 @@ class CudyRouter:
                 if cookie.get("sysauth"):
                      self.auth_cookie = cookie.get("sysauth").value
                      return True
-        except: pass
+        except Exception:
+            pass
         return False
 
     def get(self, url: str) -> str:
@@ -89,7 +90,8 @@ class CudyRouter:
                     if self.authenticate(): continue
                     else: break
                 if response.ok: return response.text
-            except: pass
+            except Exception:
+                pass
         return ""
 
     async def get_data(self, hass, options: dict[str, Any], previous_data: dict[str, Any] = None) -> dict[str, Any]:

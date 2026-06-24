@@ -1,0 +1,2 @@
+#!/bin/bash
+claude --resume 48135eab-a0b3-4a48-9101-65de912a4302

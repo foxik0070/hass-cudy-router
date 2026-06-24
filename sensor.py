@@ -154,9 +154,7 @@ class CudyGenericSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, description):
         super().__init__(coordinator)
         self.entity_description = description
-        # Unique ID zajistí, že se senzory různých routerů nepoperou
         self._attr_unique_id = f"cudy_{coordinator.host}_{description.key}"
-        # Name nyní obsahuje IP adresu, aby se sensory jmenovaly unikátně
         self._attr_name = f"Cudy {coordinator.host} {description.name}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.host)},
