@@ -156,6 +156,8 @@ class CudyGenericSensor(CoordinatorEntity, SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"cudy_{coordinator.host}_{description.key}"
         self._attr_name = f"Cudy {coordinator.host} {description.name}"
+        host_slug = coordinator.host.replace(".", "_")
+        self.entity_id = f"sensor.cudy_{host_slug}_{description.key}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.host)},
             "name": f"Cudy Router {coordinator.host}",
