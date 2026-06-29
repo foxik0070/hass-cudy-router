@@ -117,7 +117,9 @@ class CudyRouter:
         data[MODULE_DEVICES] = parse_devices(raw_dev, self.host)
 
         try:
-            raw_bw = await hass.async_add_executor_job(self.get, "admin/status/bandwidth?iface=eth0")
+            is_ax = any(m in hw_version for m in ("WR3000", "WR3000E", "AX3000", "AX1800", "AX6000"))
+            bw_iface = "eth1" if is_ax else "eth0"
+            raw_bw = await hass.async_add_executor_job(self.get, f"admin/status/bandwidth?iface={bw_iface}")
             if raw_bw:
                 data[MODULE_BANDWIDTH] = parse_bandwidth_json(json.loads(raw_bw), hw_version)
             else:
