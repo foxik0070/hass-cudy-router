@@ -173,17 +173,17 @@ def _parse_ac1200_style(soup: BeautifulSoup) -> list[dict]:
             ip, mac = "Unknown", "Unknown"
             ipmac_div = row.find("div", id=re.compile(r"-ipmac$"))
             if ipmac_div:
-                parts = ipmac_div.get_text(strip=True, separator="\n").split("\n")
+                parts = [p for p in ipmac_div.get_text(strip=True, separator="\n").split("\n") if p]
                 if len(parts) >= 1: ip = _get_clean_text(BeautifulSoup(parts[0], "html.parser"))
                 if len(parts) >= 2: mac = _get_clean_text(BeautifulSoup(parts[1], "html.parser"))
-            
+
             hostname_raw = _get_clean_text(row.find("div", id=re.compile(r"-hostnamexs$")))
             hostname = ip if not hostname_raw or "Unknown" in hostname_raw else hostname_raw
 
             speed_div = row.find("div", id=re.compile(r"-speed$"))
             up_s, down_s = "0", "0"
             if speed_div:
-                s_parts = speed_div.get_text(strip=True, separator="\n").split("\n")
+                s_parts = [p for p in speed_div.get_text(strip=True, separator="\n").split("\n") if p]
                 if len(s_parts) >= 2: up_s, down_s = s_parts[0], s_parts[1]
 
             conn_raw = _get_clean_text(row.find("div", id=re.compile(r"-iface$"))).upper()
