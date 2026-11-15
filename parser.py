@@ -187,6 +187,11 @@ def _parse_ac1200_style(soup: BeautifulSoup) -> list[dict]:
                 if len(s_parts) >= 2: up_s, down_s = s_parts[0], s_parts[1]
 
             conn_raw = _get_clean_text(row.find("div", id=re.compile(r"-iface$"))).upper()
+            if not conn_raw or conn_raw in ("UNKNOWN", "-"):
+                # firmware 2.5.4x (11/2026): sloupec iface chybi, typ pripojeni je u jmena („5G Wi-Fi“, „Wired“)
+                hn = row.find("div", id=re.compile(r"-hostname$"))
+                m = re.search(r"(\d(?:\.\d)?G WI-FI|WIRED|LAN)", hn.get_text(" ", strip=True).upper()) if hn else None
+                conn_raw = m.group(1) if m else "WIRED"
             is_eth = "WIRED" in conn_raw or any(x in conn_raw for x in ["ETH", "LAN"])
             is_wifi = any(x in conn_raw for x in ["G", "WIFI", "WIRELESS"]) and not is_eth
             if not is_wifi and not is_eth: is_eth = True
